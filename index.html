@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhyLab V2 - Virtual Lab Hukum Hooke</title>
+    <style>
+        :root {
+            --navy: #17324D;
+            --blue: #2878B5;
+            --teal: #168A8A;
+            --green: #2E8B57;
+            --orange: #E58A2B;
+            --red: #C94C4C;
+            --purple: #7654A5;
+            --bg: #F4F7FB;
+            --white: #FFFFFF;
+            --border: #D7E1EA;
+            --text: #263746;
+            --muted: #687887;
+            --light-blue: #EAF4FC;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; }
+
+        header { background: var(--navy); color: var(--white); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        header h1 { font-size: 1.5rem; }
+        header p { font-size: 0.85rem; color: #DCEBFA; }
+        .progress-box { text-align: right; }
+        .progress-bar { width: 150px; height: 10px; background: #DCE5ED; border-radius: 5px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.3s; }
+
+        .main-container { display: flex; flex: 1; flex-direction: row; }
+        
+        nav { width: 240px; background: var(--white); border-right: 1px solid var(--border); padding: 10px 0; display: flex; flex-direction: column; flex-shrink: 0; }
+        nav h3 { font-size: 0.75rem; color: var(--muted); padding: 10px 20px; text-transform: uppercase; }
+        nav button { background: none; border: none; text-align: left; padding: 10px 20px; font-size: 0.9rem; color: var(--text); cursor: pointer; width: 100%; display: flex; align-items: center; gap: 10px; }
+        nav button:hover, nav button.active { background: var(--light-blue); color: var(--navy); font-weight: bold; }
+        
+        main { flex: 1; padding: 20px; overflow-y: auto; max-width: 1200px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .card h2 { color: var(--navy); font-size: 1.2rem; margin-bottom: 10px; }
+        .card p, .card li { font-size: 0.95rem; line-height: 1.5; color: var(--text); }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 5px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.95rem; }
+        textarea { resize: vertical; min-height: 80px; }
+
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; display: inline-block; font-size: 0.9rem; }
+        .btn-blue { background: var(--blue); }
+        .btn-teal { background: var(--teal); }
+        .btn-green { background: var(--green); }
+        .btn-orange { background: var(--orange); }
+        .btn-red { background: var(--red); }
+        .btn:hover { opacity: 0.9; }
+
+        .split-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+
+        canvas { background: #F9FCFF; border: 1px solid var(--border); border-radius: 4px; width: 100%; height: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: center; font-size: 0.9rem; }
+        th { background: var(--navy); color: white; }
+
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; }
+            nav { width: 100%; border-right: none; border-bottom: 1px solid var(--border); overflow-x: auto; flex-direction: row; }
+            nav h3 { display: none; }
+            nav button { white-space: nowrap; padding: 10px 15px; }
+            .split-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>PHYLAB V2</h1>
+            <p>Virtual Laboratory • Konstanta Pegas & Hukum Hooke</p>
+        </div>
+        <div class="progress-box">
+            <span id="progress-text" style="font-size:0.85rem; font-weight:bold;">Progress Belajar: 0%</span>
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <nav id="navbar">
+            <h3>Menu Pembelajaran</h3>
+            <button onclick="nav('home')" class="active">🏠 Beranda</button>
+            <button onclick="nav('tujuan')">🎯 Tujuan</button>
+            <button onclick="nav('materi')">📚 Materi</button>
+            <button onclick="nav('pra')">📝 Pra-Praktikum</button>
+            <button onclick="nav('alat')">🧰 Alat & Bahan</button>
+            <button onclick="nav('simulasi')">🔬 Simulasi</button>
+            <button onclick="nav('data')">📊 Data Percobaan</button>
+            <button onclick="nav('grafik')">📈 Grafik</button>
+            <button onclick="nav('analisis')">🧠 Analisis</button>
+            <button onclick="nav('kesimpulan')">📝 Kesimpulan</button>
+            <button onclick="nav('evaluasi')">🎮 Evaluasi</button>
+            <button onclick="nav('laporan')">📋 Laporan</button>
+            <button onclick="nav('glosarium')">📖 Glosarium</button>
+            <button onclick="nav('refleksi')">⭐ Refleksi</button>
+        </nav>
+
+        <main>
+            <!-- BERANDA -->
+            <section id="home" class="page active">
+                <div class="card" style="background: var(--navy); color: white;">
+                    <h2 style="color:white; font-size: 1.8rem;">Selamat Datang di PhyLab</h2>
+                    <p style="color: #D9ECFF; margin-top: 5px;">Laboratorium virtual interaktif untuk memahami Hukum Hooke dan Konstanta Pegas secara mandiri melalui HP atau Komputer.</p>
+                    <button class="btn btn-teal" style="margin-top: 15px;" onclick="nav('tujuan')">🚀 Mulai Belajar</button>
+                </div>
+                <div class="card">
+                    <h2>👤 Identitas Siswa</h2>
+                    <div class="grid-3">
+                        <div class="form-group"><label>Nama Lengkap</label><input type="text" id="id-nama" placeholder="Masukkan nama..."></div>
+                        <div class="form-group"><label>Kelas</label><input type="text" id="id-kelas" placeholder="Contoh: XI MIPA 1"></div>
+                        <div class="form-group"><label>Sekolah</label><input type="text" id="id-sekolah" placeholder="Nama sekolah..."></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TUJUAN -->
+            <section id="tujuan" class="page">
+                <div class="card">
+                    <h2>🎯 Tujuan Pembelajaran</h2>
+                    <ol style="margin-left: 20px;">
+                        <li>Menjelaskan konsep dasar elastisitas benda dan Hukum Hooke.</li>
+                        <li>Melakukan pengujian virtual pengaruh gaya tarik terhadap pertambahan panjang pegas.</li>
+                        <li>Mengolah data eksperimen dan menentukan nilai konstanta pegas (k).</li>
+                        <li>Menganalisis hubungan antara gaya (F) dan pertambahan panjang (Δx) melalui grafik.</li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- MATERI -->
+            <section id="materi" class="page">
+                <div class="card">
+                    <h2>📚 Ringkasan Materi</h2>
+                    <p><b>Hukum Hooke:</b> Menyatakan bahwa pada daerah elastisitas, gaya F yang bekerja pada pegas berbanding lurus dengan pertambahan panjangnya Δx.</p>
+                    <div style="background: var(--light-blue); padding: 15px; text-align: center; font-size: 1.4rem; font-weight: bold; color: var(--navy); margin: 15px 0; border-radius: 5px;">
+                        F = k · Δx &nbsp;&nbsp;|&nbsp;&nbsp; Δx = L - L₀ &nbsp;&nbsp;|&nbsp;&nbsp; F = m · g
+                    </div>
+                </div>
+            </section>
+
+            <!-- PRA-PRAKTIKUM -->
+            <section id="pra" class="page">
+                <div class="card">
+                    <h2>📝 Pertanyaan Prediksi (Pra-Praktikum)</h2>
+                    <div class="form-group">
+                        <label>Apa yang akan terjadi pada pertambahan panjang pegas (Δx) jika massa beban diperbesar?</label>
+                        <textarea id="pra-prediksi" placeholder="Tuliskan prediksimu di sini sebelum melakukan simulasi..."></textarea>
+                    </div>
+                    <button class="btn btn-teal" onclick="alert('Prediksi berhasil disimpan!')">💾 Simpan Prediksi</button>
+                </div>
+            </section>
+
+            <!-- ALAT & BAHAN -->
+            <section id="alat" class="page">
+                <div class="card">
+                    <h2>🧰 Alat & Bahan Virtual</h2>
+                    <ul style="margin-left: 20px; line-height: 1.8;">
+                        <li><b>Pegas Virtual:</b> Benda elastis tempat terjadinya pertambahan panjang.</li>
+                        <li><b>Beban Massa (m):</b> Pemberi gaya berat (F = m · g).</li>
+                        <li><b>Statif & Penggaris Digital:</b> Skala pengukur pertambahan panjang (Δx).</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- SIMULASI -->
+            <section id="simulasi" class="page">
+                <div class="card">
+                    <h2>🔬 Simulasi Praktikum</h2>
+                    <div class="split-grid">
+                        <div>
+                            <canvas id="simCanvas" width="500" height="450"></canvas>
+                        </div>
+                        <div style="background: #F8FAFC; padding: 15px; border-radius: 6px; border: 1px solid var(--border);">
+                            <h3 style="margin-bottom: 10px; color: var(--navy);">⚙ Panel Kontrol</h3>
+                            
+                            <div class="form-group">
+                                <label>Massa (m): <b id="val-m">0.50</b> kg</label>
+                                <input type="range" id="input-m" min="0.1" max="2.0" step="0.05" value="0.5" oninput="updateSim()">
+                            </div>
+                            <div class="form-group">
+                                <label>Konstanta Pegas (k): <b id="val-k">100</b> N/m</label>
+                                <input type="range" id="input-k" min="20" max="200" step="5" value="100" oninput="updateSim()">
+                            </div>
+                            <div class="form-group">
+                                <label>Gravitasi (g): <b id="val-g">9.8</b> m/s²</label>
+                                <input type="range" id="input-g" min="8.0" max="10.0" step="0.1" value="9.8" oninput="updateSim()">
+                            </div>
+
+                            <div style="margin-bottom: 15px; display:flex; gap: 5px;">
+                                <button class="btn btn-green" onclick="toggleSim()">▶ Play/Pause</button>
+                                <button class="btn btn-red" onclick="resetSim()">↻ Reset</button>
+                            </div>
+
+                            <div style="background: var(--light-blue); padding: 10px; border-radius: 4px; font-size: 0.85rem; line-height: 1.6;">
+                                <b>Hasil Real-Time:</b><br>
+                                Gaya Tarik (F) = <span id="out-f">4.90</span> N<br>
+                                Pertambahan (Δx) = <span id="out-dx">0.0490</span> m<br>
+                                Periode (T) = <span id="out-t">0.444</span> s
+                            </div>
+
+                            <button class="btn btn-blue" style="width: 100%; margin-top: 15px;" onclick="tambahData()">📏 Catat Data Percobaan</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DATA PERCOBAAN -->
+            <section id="data" class="page">
+                <div class="card">
+                    <h2>📊 Tabel Data Hasil Percobaan</h2>
+                    <table id="tabel-data">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>m (kg)</th>
+                                <th>F (N)</th>
+                                <th>L₀ (m)</th>
+                                <th>L (m)</th>
+                                <th>Δx (m)</th>
+                                <th>k (N/m)</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div style="margin-top: 15px; display: flex; gap: 10px;">
+                        <button class="btn btn-red" onclick="hapusSemuaData()">🗑 Hapus Semua Data</button>
+                        <button class="btn btn-teal" onclick="eksporCSV()">💾 Ekspor File CSV</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GRAFIK -->
+            <section id="grafik" class="page">
+                <div class="card">
+                    <h2>📈 Grafik Hubungan Gaya (F) terhadap Pertambahan Panjang (Δx)</h2>
+                    <canvas id="graphCanvas" width="600" height="300"></canvas>
+                    <p id="graph-info" style="margin-top: 10px; font-weight: bold; color: var(--navy);"></p>
+                </div>
+            </section>
+
+            <!-- ANALISIS -->
+            <section id="analisis" class="page">
+                <div class="card">
+                    <h2>🧠 Analisis Data</h2>
+                    <div class="form-group">
+                        <label>1. Bagaimana hubungan antara gaya berat (F) dengan pertambahan panjang (Δx)?</label>
+                        <textarea id="ans-1"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>2. Apakah nilai konstanta pegas (k) yang didapatkan dari tiap percobaan relatif sama?</label>
+                        <textarea id="ans-2"></textarea>
+                    </div>
+                    <button class="btn btn-teal" onclick="alert('Analisis disimpan!')">💾 Simpan Analisis</button>
+                </div>
+            </section>
+
+            <!-- KESIMPULAN -->
+            <section id="kesimpulan" class="page">
+                <div class="card">
+                    <h2>📝 Kesimpulan</h2>
+                    <div class="form-group">
+                        <label>Tuliskan kesimpulan akhir dari praktikum ini:</label>
+                        <textarea id="txt-kesimpulan" style="height: 120px;"></textarea>
+                    </div>
+                    <button class="btn btn-teal" onclick="alert('Kesimpulan disimpan!')">💾 Simpan Kesimpulan</button>
+                </div>
+            </section>
+
+            <!-- EVALUASI -->
+            <section id="evaluasi" class="page">
+                <div class="card">
+                    <h2>🎮 Kuis Evaluasi Mandiri</h2>
+                    <div id="quiz-container"></div>
+                    <button class="btn btn-green" style="margin-top: 15px;" onclick="cekKuis()">✅ Cek Jawaban & Skor</button>
+                    <h3 id="score-out" style="margin-top: 15px; color: var(--navy);"></h3>
+                </div>
+            </section>
+
+            <!-- LAPORAN -->
+            <section id="laporan" class="page">
+                <div class="card">
+                    <h2>📋 Preview Laporan Praktikum Digital</h2>
+                    <textarea id="report-text" style="width: 100%; height: 250px; font-family: monospace;" readonly></textarea>
+                    <button class="btn btn-blue" style="margin-top: 10px;" onclick="updateLaporan()">↻ Generasi Laporan Terbaru</button>
+                    <button class="btn btn-teal" style="margin-top: 10px;" onclick="downloadLaporan()">💾 Download (.TXT)</button>
+                </div>
+            </section>
+
+            <!-- GLOSARIUM -->
+            <section id="glosarium" class="page">
+                <div class="card">
+                    <h2>📖 Glosarium Istilah</h2>
+                    <ul>
+                        <li><b>Elastisitas:</b> Kemampuan benda untuk kembali ke bentuk semula setelah gaya luar dihilangkan.</li>
+                        <li><b>Konstanta Pegas (k):</b> Tingkat kekakuan pegas (N/m).</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- REFLEKSI -->
+            <section id="refleksi" class="page">
+                <div class="card">
+                    <h2>⭐ Refleksi Belajar</h2>
+                    <div class="form-group">
+                        <label>Apa hal terpenting yang kamu pelajari dari penggunaan Virtual Lab ini?</label>
+                        <textarea id="txt-refleksi"></textarea>
+                    </div>
+                    <button class="btn btn-teal" onclick="alert('Refleksi disimpan!')">💾 Simpan Refleksi</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let visited = new Set(['home']);
+        let dataPercobaan = [];
+        let simRunning = false;
+        let simPhase = 0;
+        let L0 = 0.20;
+
+        function nav(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('#navbar button').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(pageId).classList.add('active');
+            if(event && event.target) event.target.classList.add('active');
+            
+            visited.add(pageId);
+            let progress = Math.round((visited.size / 14) * 100);
+            document.getElementById('progress-fill').style.width = progress + '%';
+            document.getElementById('progress-text').innerText = `Progress Belajar: ${progress}%`;
+
+            if(pageId === 'simulasi') updateSim();
+            if(pageId === 'grafik') renderGrafik();
+            if(pageId === 'laporan') updateLaporan();
+        }
+
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function updateSim() {
+            let m = parseFloat(document.getElementById('input-m').value);
+            let k = parseFloat(document.getElementById('input-k').value);
+            let g = parseFloat(document.getElementById('input-g').value);
+
+            document.getElementById('val-m').innerText = m.toFixed(2);
+            document.getElementById('val-k').innerText = k.toFixed(0);
+            document.getElementById('val-g').innerText = g.toFixed(1);
+
+            let F = m * g;
+            let dx = F / k;
+            let T = 2 * Math.PI * Math.sqrt(m / k);
+
+            document.getElementById('out-f').innerText = F.toFixed(2);
+            document.getElementById('out-dx').innerText = dx.toFixed(4);
+            document.getElementById('out-t').innerText = T.toFixed(3);
+
+            drawSim(m, dx);
+        }
+
+        function drawSim(m, dx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let x = canvas.width / 2;
+            let startY = 60;
+            let reqY = startY + 120 + (dx * 1200); 
+            if(simRunning) reqY += Math.sin(simPhase) * 15;
+
+            ctx.fillStyle = "#8A98A5";
+            ctx.fillRect(x - 60, 20, 120, 15);
+            ctx.fillRect(x - 5, 20, 10, 350);
+
+            ctx.beginPath();
+            ctx.strokeStyle = "#7654A5";
+            ctx.lineWidth = 3;
+            let coils = 12;
+            ctx.moveTo(x, startY);
+            for(let i=0; i<=coils; i++) {
+                let currY = startY + (reqY - startY) * (i / coils);
+                let currX = (i % 2 === 0) ? x + 15 : x - 15;
+                ctx.lineTo(currX, currY);
+            }
+            ctx.stroke();
+
+            ctx.fillStyle = "#2878B5";
+            ctx.fillRect(x - 30, reqY, 60, 40);
+            ctx.fillStyle = "white";
+            ctx.font = "bold 12px Segoe UI";
+            ctx.textAlign = "center";
+            ctx.fillText(m.toFixed(2) + " kg", x, reqY + 24);
+        }
+
+        function toggleSim() { simRunning = !simRunning; }
+        function resetSim() { simRunning = false; simPhase = 0; updateSim(); }
+
+        setInterval(() => {
+            if(simRunning) {
+                simPhase += 0.2;
+                updateSim();
+            }
+        }, 40);
+
+        function tambahData() {
+            let m = parseFloat(document.getElementById('input-m').value);
+            let k = parseFloat(document.getElementById('input-k').value);
+            let g = parseFloat(document.getElementById('input-g').value);
+            let F = m * g;
+            let dx = F / k;
+            let L = L0 + dx;
+
+            dataPercobaan.push({ no: dataPercobaan.length + 1, m, F, L0, L, dx, k });
+            renderTabel();
+            alert("Data berhasil dicatatkan ke Tabel Data!");
+        }
+
+        function renderTabel() {
+            let tbody = document.querySelector('#tabel-data tbody');
+            tbody.innerHTML = '';
+            dataPercobaan.forEach(d => {
+                tbody.innerHTML += `<tr>
+                    <td>${d.no}</td>
+                    <td>${d.m.toFixed(2)}</td>
+                    <td>${d.F.toFixed(2)}</td>
+                    <td>${d.L0.toFixed(2)}</td>
+                    <td>${d.L.toFixed(4)}</td>
+                    <td>${d.dx.toFixed(4)}</td>
+                    <td>${d.k.toFixed(1)}</td>
+                </tr>`;
+            });
+        }
+
+        function hapusSemuaData() { dataPercobaan = []; renderTabel(); }
+
+        function eksporCSV() {
+            let csv = "No,Massa(kg),Gaya(N),L0(m),L(m),DeltaX(m),k(N/m)\n";
+            dataPercobaan.forEach(d => {
+                csv += `${d.no},${d.m},${d.F},${d.L0},${d.L},${d.dx},${d.k}\n`;
+            });
+            let blob = new Blob([csv], { type: 'text/csv' });
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'data_phylab.csv';
+            a.click();
+        }
+
+        function renderGrafik() {
+            const gCanvas = document.getElementById('graphCanvas');
+            const gCtx = gCanvas.getContext('2d');
+            gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height);
+
+            if(dataPercobaan.length === 0) {
+                document.getElementById('graph-info').innerText = "Belum ada data untuk ditampilkan pada grafik.";
+                return;
+            }
+
+            gCtx.beginPath();
+            gCtx.strokeStyle = "#263746";
+            gCtx.lineWidth = 2;
+            gCtx.moveTo(50, 20); gCtx.lineTo(50, 250); gCtx.lineTo(550, 250);
+            gCtx.stroke();
+
+            let maxF = Math.max(...dataPercobaan.map(d => d.F)) * 1.2;
+            let maxDx = Math.max(...dataPercobaan.map(d => d.dx)) * 1.2;
+
+            dataPercobaan.forEach(d => {
+                let px = 50 + (d.dx / maxDx) * 500;
+                let py = 250 - (d.F / maxF) * 230;
+                
+                gCtx.beginPath();
+                gCtx.arc(px, py, 5, 0, 2 * Math.PI);
+                gCtx.fillStyle = "#2878B5";
+                gCtx.fill();
+            });
+
+            document.getElementById('graph-info').innerText = `Jumlah Titik Data: ${dataPercobaan.length} data terpeta pada grafik.`;
+        }
+
+        const soalList = [
+            { q: "1. Besaran yang menunjukkan tingkat kekakuan pegas adalah...", a: ["Massa", "Gaya", "Konstanta Pegas", "Periode"], c: 2 },
+            { q: "2. Rumus matematis dari Hukum Hooke adalah...", a: ["F = m · g", "F = k · Δx", "F = k / Δx", "T = 2π√(m/k)"], c: 1 }
+        ];
+
+        function renderKuis() {
+            let container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+            soalList.forEach((s, idx) => {
+                let html = `<div style="margin-bottom:15px;"><b>${s.q}</b><br>`;
+                s.a.forEach((opt, oIdx) => {
+                    html += `<label style="display:block; font-size:0.9rem;"><input type="radio" name="q${idx}" value="${oIdx}"> ${opt}</label>`;
+                });
+                html += `</div>`;
+                container.innerHTML += html;
+            });
+        }
+        renderKuis();
+
+        function cekKuis() {
+            let score = 0;
+            soalList.forEach((s, idx) => {
+                let sel = document.querySelector(`input[name="q${idx}"]:checked`);
+                if(sel && parseInt(sel.value) === s.c) score += 50;
+            });
+            document.getElementById('score-out').innerText = `Skor Akhir Anda: ${score} / 100`;
+        }
+
+        function updateLaporan() {
+            let nama = document.getElementById('id-nama').value || '-';
+            let kelas = document.getElementById('id-kelas').value || '-';
+            let sekolah = document.getElementById('id-sekolah').value || '-';
+            
+            let txt = `=============================================\n`;
+            txt += `         LAPORAN PRAKTIKUM VIRTUAL PHYLAB    \n`;
+            txt += `=============================================\n`;
+            txt += `Nama    : ${nama}\nKelas   : ${kelas}\nSekolah : ${sekolah}\n\n`;
+            txt += `[DATA PERCOBAAN]\n`;
+            dataPercobaan.forEach(d => {
+                txt += `No:${d.no} | F:${d.F.toFixed(2)}N | Δx:${d.dx.toFixed(4)}m | k:${d.k.toFixed(1)}N/m\n`;
+            });
+            txt += `\n[KESIMPULAN]\n` + (document.getElementById('txt-kesimpulan').value || '-');
+            
+            document.getElementById('report-text').value = txt;
+        }
+
+        function downloadLaporan() {
+            let blob = new Blob([document.getElementById('report-text').value], { type: 'text/plain' });
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'Laporan_PhyLab.txt';
+            a.click();
+        }
+    </script>
+</body>
+</html>
